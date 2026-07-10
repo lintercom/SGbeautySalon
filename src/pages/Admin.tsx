@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { services } from '../data/services';
 import { format, parseISO } from 'date-fns';
 import { cs } from 'date-fns/locale';
-import { Search, Trash2, LogOut, Home } from 'lucide-react';
+import { Search, Trash2, LogOut } from 'lucide-react';
+import { supabase, type BookingRow } from '../lib/supabase';
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -18,56 +19,81 @@ export default function Admin() {
   // New states for filtering and tabs
   const [activeTab, setActiveTab] = useState<'bookings' | 'contacts'>('bookings');
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'confirmed' | 'cancelled'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'>('all');
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (token) {
-      setIsLoggedIn(true);
-      fetchBookings(token);
-    }
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        setIsLoggedIn(true);
+        fetchBookings();
+      }
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(Boolean(session));
+      if (session) fetchBookings();
+      else setBookings([]);
+    });
+
+    return () => authListener.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const channel = supabase
+      .channel('admin-bookings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => fetchBookings())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isLoggedIn]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
     try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: username,
+        password,
       });
-      
-      const data = await res.json();
-      if (res.ok) {
-        localStorage.setItem('adminToken', data.token);
+
+      if (!signInError) {
         setIsLoggedIn(true);
-        fetchBookings(data.token);
+        fetchBookings();
       } else {
-        setError(data.error);
+        setError('Neplatný e-mail nebo heslo, případně účet nemá oprávnění administrátora.');
       }
     } catch (err) {
       setError('Chyba při přihlášení');
     }
   };
 
-  const fetchBookings = async (token: string) => {
+  const fetchBookings = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/admin/bookings', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setBookings(data);
-      } else {
-        if (res.status === 401 || res.status === 403) {
-          handleLogout();
-        }
+      const { data, error: fetchError } = await supabase
+        .from('bookings')
+        .select('*')
+        .order('start_at', { ascending: true });
+
+      if (fetchError) {
+        if (fetchError.code === '42501') setError('Tento účet nemá oprávnění administrátora.');
+        return;
       }
+
+      const normalized = ((data || []) as BookingRow[]).map(row => ({
+        id: row.id,
+        serviceId: row.service_id,
+        date: format(new Date(row.start_at), 'yyyy-MM-dd'),
+        startTime: format(new Date(row.start_at), 'HH:mm'),
+        endTime: format(new Date(row.end_at), 'HH:mm'),
+        customerName: row.customer_name,
+        customerEmail: row.customer_email,
+        customerPhone: row.customer_phone,
+        customerNote: row.customer_note,
+        status: row.status,
+      }));
+      setBookings(normalized);
     } catch (error) {
       console.error(error);
     } finally {
@@ -75,50 +101,28 @@ export default function Admin() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminToken');
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setIsLoggedIn(false);
     setBookings([]);
     navigate('/');
   };
 
-  const updateStatus = async (id: number, status: string) => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-
+  const updateStatus = async (id: string, status: string) => {
     try {
-      const res = await fetch(`/api/admin/bookings/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status })
-      });
-      if (res.ok) {
-        fetchBookings(token);
-      }
+      const { error: updateError } = await supabase.from('bookings').update({ status }).eq('id', id);
+      if (!updateError) fetchBookings();
     } catch (error) {
       console.error(error);
     }
   };
 
-  const deleteBooking = async (id: number) => {
+  const deleteBooking = async (id: string) => {
     if (!window.confirm('Opravdu chcete tuto rezervaci vymazat?')) return;
     
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-
     try {
-      const res = await fetch(`/api/admin/bookings/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (res.ok) {
-        fetchBookings(token);
-      }
+      const { error: deleteError } = await supabase.from('bookings').delete().eq('id', id);
+      if (!deleteError) fetchBookings();
     } catch (error) {
       console.error(error);
     }
@@ -127,19 +131,9 @@ export default function Admin() {
   const deleteContact = async (email: string) => {
     if (!window.confirm('Opravdu chcete vymazat tento kontakt a všechny jeho rezervace?')) return;
     
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-
     try {
-      const res = await fetch(`/api/admin/contacts/${encodeURIComponent(email)}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (res.ok) {
-        fetchBookings(token);
-      }
+      const { error: deleteError } = await supabase.from('bookings').delete().eq('customer_email', email);
+      if (!deleteError) fetchBookings();
     } catch (error) {
       console.error(error);
     }
@@ -148,6 +142,14 @@ export default function Admin() {
   const getServiceName = (id: string) => {
     const service = services.find(s => s.id === id);
     return service ? service.name : id;
+  };
+
+  const statusLabels: Record<string, string> = {
+    pending: 'Čeká na potvrzení',
+    confirmed: 'Potvrzeno',
+    cancelled: 'Zrušeno',
+    completed: 'Dokončeno',
+    no_show: 'Nedorazil/a',
   };
 
   const filteredBookings = useMemo(() => {
@@ -205,9 +207,9 @@ export default function Admin() {
           
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Uživatelské jméno</label>
+              <label className="block text-sm text-gray-600 mb-1">E-mail administrátora</label>
               <input 
-                type="text" 
+                type="email" 
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 className="w-full rounded-xl border border-[#E5E1DA] bg-[#FAF9F6] p-3.5 focus:outline-none focus:border-[#A68966] transition-colors"
@@ -287,8 +289,11 @@ export default function Admin() {
             className="w-full md:w-auto px-4 py-2 border border-[#E5E1DA] focus:outline-none focus:border-[#A68966] transition-colors bg-white"
           >
             <option value="all">Všechny stavy</option>
+            <option value="pending">Čekající</option>
             <option value="confirmed">Potvrzené</option>
             <option value="cancelled">Zrušené</option>
+            <option value="completed">Dokončené</option>
+            <option value="no_show">Nedorazili</option>
           </select>
         )}
       </div>
@@ -340,7 +345,7 @@ export default function Admin() {
                           booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                           'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {booking.status === 'confirmed' ? 'Potvrzeno' : booking.status === 'cancelled' ? 'Zrušeno' : booking.status}
+                          {statusLabels[booking.status] || booking.status}
                         </span>
                       </td>
                       <td className="p-4 text-right">
@@ -351,6 +356,13 @@ export default function Admin() {
                               className="text-sm text-[#A68966] hover:text-[#8e7555] transition-colors"
                             >
                               Zrušit
+                            </button>
+                          ) : booking.status === 'pending' ? (
+                            <button
+                              onClick={() => updateStatus(booking.id, 'confirmed')}
+                              className="text-sm text-green-600 hover:text-green-800 transition-colors"
+                            >
+                              Potvrdit
                             </button>
                           ) : (
                             <button 
