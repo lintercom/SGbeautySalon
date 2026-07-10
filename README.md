@@ -1,20 +1,49 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# SG Beauty Salon
 
-# Run and deploy your AI Studio app
+Web salonu Sabiny Goldbachové ve Vizovicích. Obsahuje katalog služeb, kontaktní informace, online rezervace a administrační přehled.
 
-This contains everything you need to run your app locally.
+## Lokální spuštění
 
-View your app in AI Studio: https://ai.studio/apps/8327f845-df8b-4c73-ab36-b0fdbb4d76af
+Požadavky: Node.js 22+
 
-## Run Locally
+```bash
+npm install
+npm run dev
+```
 
-**Prerequisites:**  Node.js
+Web poběží na `http://localhost:3000`.
 
+## Supabase
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Vytvořte `.env.local` podle `.env.example`:
+
+```env
+VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
+```
+
+Databázové tabulky, RLS pravidla, rezervační funkce a auditní události jsou definované v `supabase/migrations/`.
+
+Rezervační systém používá:
+
+- `bookings` – rezervace zákazníků,
+- `business_hours` – otevírací doba,
+- `blocked_periods` – dovolené a blokované termíny,
+- `booking_events` – auditní historie změn,
+- `get_available_slots()` – bezpečný výpočet volných časů,
+- `create_booking()` – validovaný a atomický zápis rezervace.
+
+Přímý anonymní přístup k osobním údajům je zakázaný. Veřejný web může volat pouze dvě omezené databázové funkce.
+
+## Administrace
+
+Administrátor se přihlašuje na `/#/admin` přes Supabase Auth. Přístup k datům je řízený pomocí `app_metadata.role = admin` a RLS.
+
+## Kontroly
+
+```bash
+npm run lint
+npm run build
+```
+
+Push do větve `main` automaticky nasadí statickou část na GitHub Pages.

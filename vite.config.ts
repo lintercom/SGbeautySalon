@@ -7,6 +7,15 @@ export default defineConfig(() => {
   return {
     base: process.env.GITHUB_ACTIONS ? '/SGbeautySalon/' : '/',
     plugins: [react(), tailwindcss()],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            supabase: ['@supabase/supabase-js'],
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

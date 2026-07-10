@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { serviceCategories, services, type Service } from '../data/services';
 import { CalendarIcon, Clock, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react';
-import { format, addDays, startOfToday, isSameDay, isWeekend, parseISO } from 'date-fns';
+import { format, addDays, startOfToday, isSameDay, isWeekend } from 'date-fns';
 import { cs } from 'date-fns/locale';
 import { cn } from '../lib/utils';
+import { supabase } from '../lib/supabase';
 
 type Step = 'category' | 'service' | 'datetime' | 'details' | 'summary' | 'success';
 
@@ -20,6 +21,7 @@ export default function Booking() {
   
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [isLoadingTimes, setIsLoadingTimes] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState('');
   const [isBooking, setIsBooking] = useState(false);
   
   // Details form
@@ -45,16 +47,33 @@ export default function Booking() {
   }, [step]);
 
   useEffect(() => {
-    if (date && service) {
+    if (!date || !service) return;
+
+    let isCurrent = true;
+    const loadAvailableTimes = async () => {
       setIsLoadingTimes(true);
-      fetch(`/api/bookings/available?date=${format(date, 'yyyy-MM-dd')}&serviceId=${service.id}`)
-        .then(res => res.json())
-        .then(data => {
-          setAvailableTimes(data.slots || []);
-        })
-        .catch(err => console.error(err))
-        .finally(() => setIsLoadingTimes(false));
-    }
+      setAvailabilityError('');
+      setAvailableTimes([]);
+
+      const totalDuration = service.durationMinutes + service.bufferBeforeMinutes + service.bufferAfterMinutes;
+      const { data, error } = await supabase.rpc('get_available_slots', {
+        p_booking_date: format(date, 'yyyy-MM-dd'),
+        p_service_id: service.id,
+        p_duration_minutes: totalDuration,
+      });
+
+      if (!isCurrent) return;
+      if (error) {
+        console.error('Nepodařilo se načíst termíny:', error);
+        setAvailabilityError('Termíny se nyní nepodařilo načíst. Zkuste to prosím znovu.');
+      } else {
+        setAvailableTimes((data || []).map((row: { slot: string }) => row.slot));
+      }
+      setIsLoadingTimes(false);
+    };
+
+    loadAvailableTimes();
+    return () => { isCurrent = false; };
   }, [date, service]);
 
   const availableDates = Array.from({ length: 14 }).map((_, i) => addDays(startOfToday(), i)).filter(d => !isWeekend(d));
@@ -65,25 +84,24 @@ export default function Booking() {
     
     setIsBooking(true);
     try {
-      const res = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          serviceId: service.id,
-          date: format(date, 'yyyy-MM-dd'),
-          startTime: time,
-          customerName: name,
-          customerEmail: email,
-          customerPhone: phone
-        })
+      const totalDuration = service.durationMinutes + service.bufferBeforeMinutes + service.bufferAfterMinutes;
+      const { error } = await supabase.rpc('create_booking', {
+        p_service_id: service.id,
+        p_service_name: service.name,
+        p_duration_minutes: totalDuration,
+        p_booking_date: format(date, 'yyyy-MM-dd'),
+        p_start_time: time,
+        p_customer_name: name,
+        p_customer_email: email,
+        p_customer_phone: phone,
+        p_customer_note: note || null,
       });
-      
-      if (res.ok) {
+
+      if (!error) {
         setStep('success');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        const errorData = await res.json();
-        alert('Chyba při rezervaci: ' + errorData.error);
+        alert('Rezervaci se nepodařilo vytvořit: ' + error.message);
       }
     } catch (error) {
       alert('Došlo k chybě při komunikaci se serverem.');
@@ -245,6 +263,10 @@ export default function Booking() {
                     isLoadingTimes ? (
                       <div className="p-6 text-center text-[#9ca3af] text-sm bg-[#E5E1DA] border border-[#E5E1DA]">
                         Načítání dostupných časů...
+                      </div>
+                    ) : availabilityError ? (
+                      <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-600">
+                        {availabilityError}
                       </div>
                     ) : availableTimes.length > 0 ? (
                       <div className="grid grid-cols-3 gap-3">
