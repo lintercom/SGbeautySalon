@@ -1,0 +1,6 @@
+{
+  "name": "SG Beauty Salon",
+  "description": "Profesionální beauty salon ve Vizovicích - kosmetika, Head Spa, řasy, obočí a péče o vlasy.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
