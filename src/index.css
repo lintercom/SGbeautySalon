@@ -123,10 +123,19 @@
     text-wrap: pretty;
   }
 
+  :is(button, a).rounded-full,
+  button.rounded-xl,
+  button.rounded-2xl,
   .corner-hover {
+    border-radius: 0.75rem !important;
     transition-property: background-color, border-color, color, border-radius, box-shadow, transform;
     transition-duration: 300ms;
     transition-timing-function: ease;
+  }
+
+  a.rounded-full[aria-current="page"] {
+    border-radius: 0 !important;
+    border-top-left-radius: 1.5rem !important;
   }
 
   .signature-divider {
@@ -207,8 +216,12 @@
   }
 
   @media (hover: hover) {
+    :is(button, a).rounded-full:hover,
+    button.rounded-xl:hover,
+    button.rounded-2xl:hover,
     .corner-hover:hover {
-      border-top-left-radius: 1.5rem;
+      border-radius: 0 !important;
+      border-top-left-radius: 1.5rem !important;
     }
   }
 

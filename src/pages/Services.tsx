@@ -21,6 +21,7 @@ export default function Services() {
         <div className="mb-20 flex flex-wrap justify-center gap-2.5">
           <Link
             to="/sluzby"
+            aria-current={!categorySlug ? 'page' : undefined}
             className={cn(
               "rounded-full px-5 py-2.5 text-xs font-medium transition-all duration-300",
               !categorySlug 
@@ -34,6 +35,7 @@ export default function Services() {
             <Link
               key={category.id}
               to={`/sluzby/${category.slug}`}
+              aria-current={categorySlug === category.slug ? 'page' : undefined}
               className={cn(
                 "rounded-full px-5 py-2.5 text-xs font-medium transition-all duration-300",
                 categorySlug === category.slug
