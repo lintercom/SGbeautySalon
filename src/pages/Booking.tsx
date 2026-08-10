@@ -238,7 +238,7 @@ export default function Booking() {
                         <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {s.displayDuration}</span>
                       </div>
                     </div>
-                    <div className="font-serif text-[#3c3c3c] whitespace-nowrap">
+                    <div className="whitespace-nowrap font-sans text-sm font-semibold tabular-nums tracking-[-0.01em] text-[#243128]">
                       {s.displayPrice}
                     </div>
                   </button>
@@ -406,7 +406,7 @@ export default function Booking() {
                     <p className="font-serif text-xl text-[#3c3c3c] mb-2">{service?.name}</p>
                     <div className="flex gap-4 text-sm text-[#6b7280]">
                       <span>{service?.displayDuration}</span>
-                      <span className="text-[#A68966] font-medium">{service?.displayPrice}</span>
+                      <span className="font-sans font-semibold tabular-nums tracking-[-0.01em] text-[#A68966]">{service?.displayPrice}</span>
                     </div>
                   </div>
                   <div>

@@ -103,11 +103,11 @@ export default function Services() {
                                 <Clock className="w-4 h-4 text-[#A68966]" />
                                 <span className="font-medium">{service.displayDuration}</span>
                               </div>
-                              <div className="text-xl font-serif text-[#3c3c3c]">
+                              <div className="font-sans text-lg font-semibold tabular-nums tracking-[-0.01em] text-[#243128]">
                                 {service.displayPrice}
                               </div>
                               {service.packagePriceCZK && (
-                                <div className="text-sm text-[#A68966] font-medium">
+                                <div className="font-sans text-xs font-semibold tabular-nums tracking-[0.04em] text-[#A68966]">
                                   Balíček: {service.packagePriceCZK} Kč
                                 </div>
                               )}
