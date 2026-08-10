@@ -7,6 +7,7 @@ import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ScrollToTop from './components/ScrollToTop';
+import SignatureOrbitDivider from './components/SignatureOrbitDivider';
 import Home from './pages/Home';
 import Services from './pages/Services';
 import About from './pages/About';
@@ -20,7 +21,7 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
-      <div className="flex min-h-screen flex-col bg-[#FAF9F6]">
+      <div className="flex min-h-screen flex-col bg-[#F7F3EC]">
         <Navbar />
         <main className="flex-1">
           <Routes>
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <SignatureOrbitDivider side="right" />
         <Footer />
 
       </div>

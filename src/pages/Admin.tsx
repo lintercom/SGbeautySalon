@@ -8,10 +8,12 @@ import { supabase, type BookingRow } from '../lib/supabase';
 
 export default function Admin() {
   const navigate = useNavigate();
+  const adminEmail = import.meta.env.VITE_SUPABASE_ADMIN_EMAIL || 'slavik-petr@seznam.cz';
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [bookings, setBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,15 +25,15 @@ export default function Admin() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        setIsLoggedIn(true);
-        fetchBookings();
-      }
+      const isAdmin = data.session?.user.app_metadata?.role === 'admin';
+      setIsLoggedIn(isAdmin);
+      if (isAdmin) fetchBookings();
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsLoggedIn(Boolean(session));
-      if (session) fetchBookings();
+      const isAdmin = session?.user.app_metadata?.role === 'admin';
+      setIsLoggedIn(isAdmin);
+      if (isAdmin) fetchBookings();
       else setBookings([]);
     });
 
@@ -44,27 +46,38 @@ export default function Admin() {
       .channel('admin-bookings')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => fetchBookings())
       .subscribe();
+
     return () => { supabase.removeChannel(channel); };
   }, [isLoggedIn]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
     
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: username,
+      if (username.trim().toLowerCase() !== 'admin') {
+        setError('Neplatné uživatelské jméno nebo heslo.');
+        return;
+      }
+
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: adminEmail,
         password,
       });
 
-      if (!signInError) {
-        setIsLoggedIn(true);
-        fetchBookings();
-      } else {
-        setError('Neplatný e-mail nebo heslo, případně účet nemá oprávnění administrátora.');
+      if (signInError || data.user?.app_metadata?.role !== 'admin') {
+        await supabase.auth.signOut();
+        setError('Neplatné uživatelské jméno nebo heslo.');
+        return;
       }
-    } catch (err) {
-      setError('Chyba při přihlášení');
+
+      setIsLoggedIn(true);
+      await fetchBookings();
+    } catch {
+      setError('Server není dostupný. Zkuste to prosím znovu.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -76,12 +89,9 @@ export default function Admin() {
         .select('*')
         .order('start_at', { ascending: true });
 
-      if (fetchError) {
-        if (fetchError.code === '42501') setError('Tento účet nemá oprávnění administrátora.');
-        return;
-      }
+      if (fetchError) throw fetchError;
 
-      const normalized = ((data || []) as BookingRow[]).map(row => ({
+      setBookings(((data || []) as BookingRow[]).map(row => ({
         id: row.id,
         serviceId: row.service_id,
         date: format(new Date(row.start_at), 'yyyy-MM-dd'),
@@ -92,10 +102,14 @@ export default function Admin() {
         customerPhone: row.customer_phone,
         customerNote: row.customer_note,
         status: row.status,
-      }));
-      setBookings(normalized);
-    } catch (error) {
-      console.error(error);
+      })));
+      setError('');
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Přihlášení proběhlo, ale rezervace se nepodařilo načíst.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -111,9 +125,10 @@ export default function Admin() {
   const updateStatus = async (id: string, status: string) => {
     try {
       const { error: updateError } = await supabase.from('bookings').update({ status }).eq('id', id);
-      if (!updateError) fetchBookings();
-    } catch (error) {
-      console.error(error);
+      if (updateError) throw updateError;
+      fetchBookings();
+    } catch {
+      setError('Stav rezervace se nepodařilo změnit.');
     }
   };
 
@@ -122,9 +137,10 @@ export default function Admin() {
     
     try {
       const { error: deleteError } = await supabase.from('bookings').delete().eq('id', id);
-      if (!deleteError) fetchBookings();
-    } catch (error) {
-      console.error(error);
+      if (deleteError) throw deleteError;
+      fetchBookings();
+    } catch {
+      setError('Rezervaci se nepodařilo vymazat.');
     }
   };
 
@@ -133,9 +149,10 @@ export default function Admin() {
     
     try {
       const { error: deleteError } = await supabase.from('bookings').delete().eq('customer_email', email);
-      if (!deleteError) fetchBookings();
-    } catch (error) {
-      console.error(error);
+      if (deleteError) throw deleteError;
+      fetchBookings();
+    } catch {
+      setError('Kontakt se nepodařilo vymazat.');
     }
   };
 
@@ -194,7 +211,7 @@ export default function Admin() {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center px-4 pb-20 pt-36 soft-grid">
+      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center px-4 pb-20 pt-36 soft-upholstery">
         <div className="w-full max-w-md rounded-[2rem] border border-[#A68966]/15 bg-white p-8 luxury-shadow md:p-10">
           <span className="eyebrow mb-4">Administrace</span>
           <h1 className="mb-8 text-3xl text-[#3c3c3c]">Přihlášení do salonu</h1>
@@ -204,14 +221,16 @@ export default function Admin() {
               {error}
             </div>
           )}
-          
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">E-mail administrátora</label>
+              <label className="block text-sm text-gray-600 mb-1">Uživatelské jméno</label>
               <input 
-                type="email" 
+                type="text"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
+                placeholder="admin"
+                autoComplete="username"
                 className="w-full rounded-xl border border-[#E5E1DA] bg-[#FAF9F6] p-3.5 focus:outline-none focus:border-[#A68966] transition-colors"
                 required
               />
@@ -222,15 +241,17 @@ export default function Admin() {
                 type="password" 
                 value={password}
                 onChange={e => setPassword(e.target.value)}
+                autoComplete="current-password"
                 className="w-full rounded-xl border border-[#E5E1DA] bg-[#FAF9F6] p-3.5 focus:outline-none focus:border-[#A68966] transition-colors"
                 required
               />
             </div>
             <button 
               type="submit"
-              className="w-full rounded-full bg-[#3c3c3c] py-3.5 text-sm uppercase tracking-widest text-white transition-all duration-300 hover:bg-[#A68966]"
+              disabled={isSubmitting}
+              className="w-full rounded-full bg-[#3c3c3c] py-3.5 text-sm uppercase tracking-widest text-white transition-all duration-300 hover:bg-[#A68966] disabled:cursor-wait disabled:opacity-60"
             >
-              Přihlásit se
+              {isSubmitting ? 'Přihlašuji…' : 'Přihlásit se'}
             </button>
           </form>
         </div>

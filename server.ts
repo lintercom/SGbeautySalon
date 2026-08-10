@@ -1,15 +1,22 @@
 import express from "express";
 import path from "path";
+import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { requireAuth, AuthRequest } from "./src/middleware/auth.ts";
-import { requireAdminAuth, AdminAuthRequest } from "./src/middleware/adminAuth.ts";
+import { requireAdminAuth } from "./src/middleware/adminAuth.ts";
 import { getOrCreateUser } from "./src/db/users.ts";
-import { getBookingsByDate, getAllBookings, createBooking, updateBookingStatus, deleteBooking, deleteBookingsByEmail } from "./src/db/bookings.ts";
+import { getBookingsByDate, createBooking } from "./src/db/bookings.ts";
 import { services } from "./src/data/services.ts";
+import { getSupabaseAdmin } from "./src/lib/supabase-admin.ts";
 import jwt from 'jsonwebtoken';
 import { parse, addMinutes, isBefore, isEqual, format } from 'date-fns';
 
+dotenv.config({ path: '.env.local' });
+dotenv.config();
+
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-admin-key-for-salon';
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
 
 async function startServer() {
   const app = express();
@@ -24,7 +31,7 @@ async function startServer() {
 
   app.post("/api/admin/login", (req, res) => {
     const { username, password } = req.body;
-    if (username === "admin" && password === "admin") {
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       const token = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '1d' });
       res.json({ token });
     } else {
@@ -34,8 +41,26 @@ async function startServer() {
 
   app.get("/api/admin/bookings", requireAdminAuth, async (req, res) => {
     try {
-      const allBookings = await getAllBookings();
-      res.json(allBookings);
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data, error } = await supabaseAdmin
+        .from('bookings')
+        .select('*')
+        .order('start_at', { ascending: true });
+
+      if (error) throw error;
+
+      res.json((data || []).map(row => ({
+        id: row.id,
+        serviceId: row.service_id,
+        date: format(new Date(row.start_at), 'yyyy-MM-dd'),
+        startTime: format(new Date(row.start_at), 'HH:mm'),
+        endTime: format(new Date(row.end_at), 'HH:mm'),
+        customerName: row.customer_name,
+        customerEmail: row.customer_email,
+        customerPhone: row.customer_phone,
+        customerNote: row.customer_note,
+        status: row.status,
+      })));
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -43,7 +68,21 @@ async function startServer() {
 
   app.patch("/api/admin/bookings/:id", requireAdminAuth, async (req, res) => {
     try {
-      const updated = await updateBookingStatus(parseInt(req.params.id), req.body.status);
+      const allowedStatuses = ['pending', 'confirmed', 'cancelled', 'completed', 'no_show'];
+      if (!allowedStatuses.includes(req.body.status)) {
+        res.status(400).json({ error: 'Neplatný stav rezervace.' });
+        return;
+      }
+
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: updated, error } = await supabaseAdmin
+        .from('bookings')
+        .update({ status: req.body.status })
+        .eq('id', req.params.id)
+        .select()
+        .single();
+
+      if (error) throw error;
       res.json(updated);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -52,7 +91,15 @@ async function startServer() {
 
   app.delete("/api/admin/bookings/:id", requireAdminAuth, async (req, res) => {
     try {
-      const deleted = await deleteBooking(parseInt(req.params.id));
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: deleted, error } = await supabaseAdmin
+        .from('bookings')
+        .delete()
+        .eq('id', req.params.id)
+        .select('id')
+        .single();
+
+      if (error) throw error;
       res.json(deleted);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -61,7 +108,14 @@ async function startServer() {
 
   app.delete("/api/admin/contacts/:email", requireAdminAuth, async (req, res) => {
     try {
-      const deleted = await deleteBookingsByEmail(req.params.email);
+      const supabaseAdmin = getSupabaseAdmin();
+      const { data: deleted, error } = await supabaseAdmin
+        .from('bookings')
+        .delete()
+        .eq('customer_email', req.params.email.toLowerCase())
+        .select('id');
+
+      if (error) throw error;
       res.json(deleted);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -176,7 +230,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  app.listen(PORT, "127.0.0.1", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }

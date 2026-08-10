@@ -1,7 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Menu, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
+
+const navLinks = [
+  { name: 'Domů', path: '/' },
+  { name: 'Služby', path: '/sluzby' },
+  { name: 'O mně', path: '/o-mne' },
+  { name: 'Kontakt', path: '/kontakt' },
+];
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -9,10 +16,9 @@ export default function Navbar() {
   const location = useLocation();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
+    const handleScroll = () => setIsScrolled(window.scrollY > 12);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -20,89 +26,89 @@ export default function Navbar() {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const navLinks = [
-    { name: 'Domů', path: '/' },
-    { name: 'Služby', path: '/sluzby' },
-    { name: 'O mně', path: '/o-mne' },
-    { name: 'Kontakt', path: '/kontakt' },
-  ];
-
-  const isActive = (path: string) => path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+  const isActive = (path: string) => path === '/'
+    ? location.pathname === '/'
+    : location.pathname.startsWith(path);
 
   return (
     <header
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        isScrolled ? 'bg-[#FAF9F6]/92 backdrop-blur-xl border-b border-[#A68966]/15 h-[72px] shadow-[0_8px_30px_rgba(60,60,60,0.04)]' : 'bg-[#FAF9F6]/95 border-b border-[#A68966]/10 h-24'
+        'fixed inset-x-0 top-0 z-50 h-[72px] border-b transition-all duration-300',
+        isScrolled
+          ? 'border-[#243128]/10 bg-[#F7F3EC]/94 shadow-[0_12px_40px_rgba(36,49,40,0.06)] backdrop-blur-xl'
+          : 'border-[#243128]/8 bg-[#F7F3EC]/90 backdrop-blur-md',
       )}
     >
-      <div className="h-full page-shell flex items-center justify-between">
+      <div className="page-shell flex h-full items-center justify-between">
         <Link to="/" className="group flex items-center gap-3" aria-label="SG Beauty Salon – domů">
-          <span className="grid h-11 w-11 place-items-center rounded-full border border-[#A68966]/50 font-serif text-lg text-[#A68966] transition-all duration-300 group-hover:bg-[#A68966] group-hover:text-white">
+          <span className="grid h-10 w-10 place-items-center rounded-full border border-[#A77E4A] font-serif text-xl font-semibold text-[#A77E4A] transition-colors group-hover:bg-[#A77E4A] group-hover:text-white">
             SG
           </span>
-          <span className="hidden sm:block leading-none">
-            <span className="block font-serif text-lg tracking-wide text-[#2f2b27]">Beauty Salon</span>
-            <span className="mt-1 block text-[8px] uppercase tracking-[0.28em] text-[#A68966]">Sabina Goldbachová</span>
+          <span className="leading-none">
+            <span className="block font-serif text-xl font-semibold tracking-[-0.01em] text-[#243128]">Beauty Salon</span>
+            <span className="mt-1 hidden text-[8px] font-semibold uppercase tracking-[0.26em] text-[#8E683A] sm:block">Sabina Goldbachová</span>
           </span>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-8 text-[11px] uppercase tracking-[0.2em] font-medium">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={cn(
-                'transition-colors duration-200 pb-1 border-b',
-                isActive(link.path)
-                  ? 'text-[#A68966] border-[#A68966]' 
-                  : 'text-[#3c3c3c] border-transparent hover:text-[#A68966]'
-              )}
-            >
-              {link.name}
-            </Link>
-          ))}
+        <nav className="hidden items-center gap-8 md:flex" aria-label="Hlavní navigace">
+          <div className="flex items-center gap-7 text-[10px] font-semibold uppercase tracking-[0.19em]">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                aria-current={isActive(link.path) ? 'page' : undefined}
+                className={cn(
+                  'relative py-2 transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-px after:origin-left after:scale-x-0 after:bg-[#A77E4A] after:transition-transform hover:text-[#A77E4A] hover:after:scale-x-100',
+                  isActive(link.path) ? 'text-[#A77E4A] after:scale-x-100' : 'text-[#243128]',
+                )}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </div>
           <Link
             to="/rezervace"
-            className="group inline-flex items-center gap-2 rounded-full bg-[#3c3c3c] px-6 py-3.5 text-[10px] text-white transition-all duration-300 hover:bg-[#A68966] hover:shadow-lg"
+            className="corner-hover group inline-flex h-11 items-center gap-3 bg-[#243128] px-5 text-[9px] font-semibold uppercase tracking-[0.18em] text-white hover:bg-[#A77E4A]"
           >
             Objednat se
             <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
         </nav>
 
-        {/* Mobile Toggle */}
         <button
-          className="md:hidden text-[#3c3c3c]"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          type="button"
+          className="grid h-11 w-11 place-items-center text-[#243128] md:hidden"
+          onClick={() => setIsMobileMenuOpen((open) => !open)}
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-navigation"
           aria-label={isMobileMenuOpen ? 'Zavřít menu' : 'Otevřít menu'}
         >
-          {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-[#FAF9F6]/98 backdrop-blur-xl shadow-xl border-t border-[#A68966]/10 animate-fade-in">
-          <nav className="flex flex-col px-6 py-7 gap-5">
-            {navLinks.map((link) => (
+        <div id="mobile-navigation" className="absolute inset-x-0 top-full border-t border-[#243128]/10 bg-[#F7F3EC] shadow-[0_24px_60px_rgba(36,49,40,0.12)] md:hidden">
+          <nav className="page-shell flex flex-col py-7" aria-label="Mobilní navigace">
+            {navLinks.map((link, index) => (
               <Link
                 key={link.path}
                 to={link.path}
+                aria-current={isActive(link.path) ? 'page' : undefined}
                 className={cn(
-                  'text-lg uppercase tracking-wider',
-                  isActive(link.path) ? 'text-[#A68966] font-medium' : 'text-[#3c3c3c]'
+                  'flex items-center justify-between border-b border-[#243128]/10 py-4 font-serif text-3xl',
+                  isActive(link.path) ? 'text-[#A77E4A]' : 'text-[#243128]',
                 )}
               >
                 {link.name}
+                <span className="font-sans text-[9px] font-semibold tracking-[0.18em] text-[#A77E4A]">0{index + 1}</span>
               </Link>
             ))}
             <Link
               to="/rezervace"
-              className="rounded-full bg-[#3c3c3c] text-white text-center px-6 py-4 text-xs uppercase tracking-[0.2em] hover:bg-[#A68966] mt-2 transition-all duration-300"
+              className="corner-hover mt-6 inline-flex min-h-14 items-center justify-center gap-3 bg-[#243128] px-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white"
             >
-              Objednat se
+              Objednat termín <ArrowUpRight className="h-4 w-4" />
             </Link>
           </nav>
         </div>

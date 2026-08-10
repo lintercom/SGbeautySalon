@@ -28,7 +28,7 @@ export interface ServiceCategory {
 export const serviceCategories: ServiceCategory[] = [
   { id: 'head-spa', title: 'Head Spa', slug: 'head-spa', image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80' },
   { id: 'kosmeticka-osetreni', title: 'Kosmetická ošetření', slug: 'kosmeticka-osetreni', image: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&q=80' },
-  { id: 'rasy-a-oboci', title: 'Řasy a obočí', slug: 'rasy-a-oboci', image: 'https://images.unsplash.com/photo-1588514930268-cb5fbbda8d1d?auto=format&fit=crop&q=80' },
+  { id: 'rasy-a-oboci', title: 'Řasy a obočí', slug: 'rasy-a-oboci', image: '/rasy-oboci.png' },
   { id: 'pece-o-vlasy', title: 'Péče o vlasy', slug: 'pece-o-vlasy', image: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&q=80' },
   { id: 'mikrojehlickovani', title: 'Mikrojehličkování', slug: 'mikrojehlickovani', image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80' },
   { id: 'epilace-voskem', title: 'Epilace voskem', slug: 'epilace-voskem', image: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80' },
