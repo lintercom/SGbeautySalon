@@ -21,7 +21,7 @@ const categoryCardLayout = [
 export default function Home() {
   return (
     <div className="pt-[72px]">
-      <section className="relative overflow-hidden bg-[#F7F3EC]">
+      <section className="relative overflow-hidden bg-[linear-gradient(180deg,#F7F3EC_0%,#F7F3EC_72%,#FAF8F3_88%,#FCFAF6_100%)]">
         <div className="pointer-events-none absolute inset-0 soft-upholstery [mask-image:linear-gradient(to_bottom,black,transparent_82%)]" />
         <div className="pointer-events-none absolute -right-40 top-10 h-[34rem] w-[34rem] rounded-full bg-[#D9DED6]/65 blur-3xl" />
 
