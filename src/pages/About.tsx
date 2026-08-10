@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Sparkles } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import sabinaImg from '../pctrs/sabina.jpg';
 
 export default function About() {
@@ -17,7 +17,6 @@ export default function About() {
             <div className="aspect-[3/4] overflow-hidden rounded-[7rem_2rem_2rem_2rem] bg-[#E5E1DA] luxury-shadow">
               <img src={sabinaImg} alt="Sabina Goldbachová" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
             </div>
-            <div className="absolute -bottom-6 -right-4 flex items-center gap-2 rounded-full bg-[#A68966] px-5 py-3 text-[10px] uppercase tracking-[0.18em] text-white"><Sparkles className="h-4 w-4" /> Péče s citem</div>
           </div>
 
           <div className="space-y-6 text-[#6b6660] leading-8">

@@ -1,4 +1,4 @@
-import { MapPin, Phone, Clock, Instagram, Facebook, Share2 } from 'lucide-react';
+import { MapPin, Phone, Clock } from 'lucide-react';
 import recepceImg from '../pctrs/recepce.png';
 
 export default function Contact() {
@@ -36,33 +36,6 @@ export default function Contact() {
                       +420 720 969 820
                     </a>
                   </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <Share2 className="w-6 h-6 text-[#A68966] shrink-0 mt-1" />
-                <div>
-                  <h3 className="font-serif text-lg text-[#3c3c3c] mb-1">Sociální sítě</h3>
-                  <div className="flex gap-4 mt-2">
-                    <a 
-                      href="[DOPLNIT INSTAGRAM]" 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="flex items-center justify-center w-12 h-12 bg-[#FAF9F6] rounded-full border border-[#E5E1DA] text-[#3c3c3c] hover:text-white hover:bg-[#A68966] hover:border-[#A68966] transition-colors"
-                      aria-label="Instagram"
-                    >
-                      <Instagram className="w-5 h-5" />
-                    </a>
-                    <a 
-                      href="[DOPLNIT FACEBOOK]" 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="flex items-center justify-center w-12 h-12 bg-[#FAF9F6] rounded-full border border-[#E5E1DA] text-[#3c3c3c] hover:text-white hover:bg-[#A68966] hover:border-[#A68966] transition-colors"
-                      aria-label="Facebook"
-                    >
-                      <Facebook className="w-5 h-5" />
-                    </a>
-                  </div>
                 </div>
               </div>
 
