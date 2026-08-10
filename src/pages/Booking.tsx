@@ -9,6 +9,39 @@ import { supabase } from '../lib/supabase';
 
 type Step = 'category' | 'service' | 'datetime' | 'details' | 'summary' | 'success';
 
+function BookingStepHeader({
+  stepNumber,
+  title,
+  onBack,
+}: {
+  stepNumber: number;
+  title: string;
+  onBack?: () => void;
+}) {
+  return (
+    <div className="mb-8 flex items-center gap-4 border-b border-[#A77E4A]/15 pb-5">
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Zpět na předchozí krok"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-[999px] border border-[#A77E4A]/35 text-[#A77E4A] transition-all duration-300 hover:border-[#A77E4A] hover:bg-[#A77E4A] hover:text-white hover:shadow-[0_8px_22px_rgba(167,126,74,0.18)]"
+        >
+          <ArrowLeft className="h-4 w-4" strokeWidth={1.6} />
+        </button>
+      )}
+      <div>
+        <span className="mb-1 block text-[9px] font-semibold uppercase tracking-[0.24em] text-[#A77E4A]">
+          Krok {stepNumber} z 5
+        </span>
+        <h2 className="font-serif text-[1.75rem] font-medium leading-none tracking-[-0.02em] text-[#243128] sm:text-[2rem]">
+          {title}
+        </h2>
+      </div>
+    </div>
+  );
+}
+
 export default function Booking() {
   const [searchParams] = useSearchParams();
   const preselectedServiceId = searchParams.get('sluzba');
@@ -167,7 +200,7 @@ export default function Booking() {
           
           {step === 'category' && (
             <div className="animate-fade-in">
-              <h2 className="text-xl font-serif text-[#3c3c3c] mb-6">1. Vyberte kategorii služeb</h2>
+              <BookingStepHeader stepNumber={1} title="Vyberte kategorii služeb" />
               <div className="grid gap-4">
                 {serviceCategories.map(cat => (
                   <button
@@ -188,12 +221,7 @@ export default function Booking() {
 
           {step === 'service' && (
             <div className="animate-fade-in">
-              <div className="flex items-center gap-4 mb-6">
-                <button onClick={() => setStep('category')} className="text-[#9ca3af] hover:text-[#3c3c3c] transition-colors">
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <h2 className="text-xl font-serif text-[#3c3c3c]">2. Vyberte službu</h2>
-              </div>
+              <BookingStepHeader stepNumber={2} title="Vyberte službu" onBack={() => setStep('category')} />
               <div className="grid gap-4">
                 {services.filter(s => s.categoryId === categoryId).map(s => (
                   <button
@@ -221,12 +249,7 @@ export default function Booking() {
 
           {step === 'datetime' && (
             <div className="animate-fade-in">
-              <div className="flex items-center gap-4 mb-6">
-                <button onClick={() => setStep('service')} className="text-[#9ca3af] hover:text-[#3c3c3c] transition-colors">
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <h2 className="text-xl font-serif text-[#3c3c3c]">3. Vyberte datum a čas</h2>
-              </div>
+              <BookingStepHeader stepNumber={3} title="Vyberte datum a čas" onBack={() => setStep('service')} />
               
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
@@ -312,12 +335,7 @@ export default function Booking() {
 
           {step === 'details' && (
             <div className="animate-fade-in">
-              <div className="flex items-center gap-4 mb-6">
-                <button onClick={() => setStep('datetime')} className="text-[#9ca3af] hover:text-[#3c3c3c] transition-colors">
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <h2 className="text-xl font-serif text-[#3c3c3c]">4. Vaše údaje</h2>
-              </div>
+              <BookingStepHeader stepNumber={4} title="Vaše údaje" onBack={() => setStep('datetime')} />
 
               <form onSubmit={(e) => { e.preventDefault(); setStep('summary'); }} className="space-y-5">
                 <div className="grid md:grid-cols-2 gap-5">
@@ -379,12 +397,7 @@ export default function Booking() {
 
           {step === 'summary' && (
             <div className="animate-fade-in">
-               <div className="flex items-center gap-4 mb-6">
-                <button onClick={() => setStep('details')} className="text-[#9ca3af] hover:text-[#3c3c3c] transition-colors">
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <h2 className="text-xl font-serif text-[#3c3c3c]">5. Souhrn rezervace</h2>
-              </div>
+              <BookingStepHeader stepNumber={5} title="Souhrn rezervace" onBack={() => setStep('details')} />
 
               <div className="mb-8 rounded-2xl border border-[#A68966]/15 bg-[#F4F1EC] p-6">
                 <div className="grid md:grid-cols-2 gap-8">
