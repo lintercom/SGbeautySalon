@@ -28,9 +28,8 @@ export default function Home() {
         <div className="page-shell relative grid min-h-[calc(100vh-72px)] items-center gap-14 py-14 lg:grid-cols-[0.92fr_1.08fr] lg:gap-20 lg:py-20">
           <div className="relative z-10 animate-slide-up">
             <h1 className="max-w-[780px] text-[3.65rem] font-medium leading-[0.88] tracking-[-0.045em] text-[#243128] sm:text-7xl lg:text-[6.35rem]">
-              Krása
-              <span className="block italic text-[#A77E4A]">v klidu.</span>
-              Péče s výsledkem.
+              Krása, která
+              <span className="block italic text-[#A77E4A]">vychází zevnitř</span>
             </h1>
             <p className="text-pretty mt-8 max-w-lg text-base leading-8 text-[#6B665F] sm:text-lg">
               Osobní rituály pro pleť, vlasy a vaše sebevědomí. Bez spěchu, s respektem k tomu, co potřebujete právě vy.
