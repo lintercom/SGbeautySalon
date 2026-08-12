@@ -35,17 +35,17 @@ export default function Home() {
               Osobní rituály pro pleť, vlasy a vaše sebevědomí. Bez spěchu, s respektem k tomu, co potřebujete právě vy.
             </p>
 
-            <div className="mt-10 flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+            <div className="mt-10 flex w-full max-w-[18rem] flex-col items-stretch gap-4 sm:max-w-none sm:flex-row sm:items-center sm:gap-5">
               <Link
                 to="/rezervace"
-                className="corner-hover group inline-flex min-h-14 items-center justify-center gap-4 bg-[#243128] px-8 text-[11px] font-semibold uppercase tracking-[0.2em] text-white hover:bg-[#A77E4A]"
+                className="corner-hover group inline-flex min-h-14 w-full items-center justify-center gap-4 bg-[#243128] px-8 text-[11px] font-semibold uppercase tracking-[0.2em] text-white hover:bg-[#A77E4A] sm:w-auto"
               >
                 Rezervovat návštěvu
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </Link>
               <Link
                 to="/sluzby"
-                className="group inline-flex items-center gap-3 border-b border-[#A77E4A]/50 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#243128] transition-colors hover:border-[#A77E4A] hover:text-[#A77E4A]"
+                className="group inline-flex w-full items-center justify-center gap-3 border-b border-[#A77E4A]/50 px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#243128] transition-colors hover:border-[#A77E4A] hover:text-[#A77E4A] sm:w-auto sm:justify-start sm:px-0 sm:pb-1.5 sm:pt-0"
               >
                 Prohlédnout služby
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

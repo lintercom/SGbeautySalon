@@ -90,7 +90,7 @@ export default function Navbar() {
       {isMobileMenuOpen && (
         <div id="mobile-navigation" className="absolute inset-x-0 top-full border-t border-[#243128]/10 bg-[#F7F3EC] shadow-[0_24px_60px_rgba(36,49,40,0.12)] md:hidden">
           <nav className="page-shell flex flex-col py-7" aria-label="Mobilní navigace">
-            {navLinks.map((link, index) => (
+            {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
@@ -101,7 +101,6 @@ export default function Navbar() {
                 )}
               >
                 {link.name}
-                <span className="font-sans text-[9px] font-semibold tracking-[0.18em] text-[#A77E4A]">0{index + 1}</span>
               </Link>
             ))}
             <Link
