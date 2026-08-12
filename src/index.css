@@ -134,7 +134,7 @@
   }
 
   a.rounded-full[aria-current="page"] {
-    border-radius: 0 !important;
+    border-radius: 0.1875rem !important;
     border-top-left-radius: 1.5rem !important;
   }
 
@@ -220,7 +220,7 @@
     button.rounded-xl:hover,
     button.rounded-2xl:hover,
     .corner-hover:hover {
-      border-radius: 0 !important;
+      border-radius: 0.1875rem !important;
       border-top-left-radius: 1.5rem !important;
     }
   }
