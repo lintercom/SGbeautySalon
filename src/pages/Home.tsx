@@ -61,9 +61,6 @@ export default function Home() {
                 className="h-full w-full object-cover object-center transition-transform duration-[1600ms] hover:scale-[1.025]"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#182019]/35 via-transparent to-transparent" />
-              <span className="absolute bottom-7 right-7 text-[10px] font-semibold uppercase tracking-[0.24em] text-white/90">
-                SG Beauty Salon
-              </span>
             </div>
             <div className="absolute -bottom-7 left-0 max-w-[290px] border-l-2 border-[#A77E4A] bg-[#F7F3EC] p-6 shadow-[0_18px_55px_rgba(36,49,40,0.13)] sm:max-w-[360px] sm:p-8">
               <p className="font-serif text-2xl italic leading-[1.15] text-[#243128] sm:text-[1.8rem]">

@@ -6,6 +6,22 @@ import { cs } from 'date-fns/locale';
 import { Search, Trash2, LogOut } from 'lucide-react';
 import { supabase, type BookingRow } from '../lib/supabase';
 
+type BookingStatus = 'all' | 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
+
+type AdminBooking = {
+  id: string;
+  serviceId: string;
+  date: string;
+  startAt: string;
+  startTime: string;
+  endTime: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  customerNote: string | null;
+  status: Exclude<BookingStatus, 'all'>;
+};
+
 export default function Admin() {
   const navigate = useNavigate();
   const adminEmail = import.meta.env.VITE_SUPABASE_ADMIN_EMAIL || 'slavik-petr@seznam.cz';
@@ -15,13 +31,13 @@ export default function Admin() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<AdminBooking[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // New states for filtering and tabs
   const [activeTab, setActiveTab] = useState<'bookings' | 'contacts'>('bookings');
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'>('all');
+  const [statusFilter, setStatusFilter] = useState<BookingStatus>('confirmed');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -95,6 +111,7 @@ export default function Admin() {
         id: row.id,
         serviceId: row.service_id,
         date: format(new Date(row.start_at), 'yyyy-MM-dd'),
+        startAt: row.start_at,
         startTime: format(new Date(row.start_at), 'HH:mm'),
         endTime: format(new Date(row.end_at), 'HH:mm'),
         customerName: row.customer_name,
@@ -165,12 +182,12 @@ export default function Admin() {
     pending: 'Čeká na potvrzení',
     confirmed: 'Potvrzeno',
     cancelled: 'Zrušeno',
-    completed: 'Dokončeno',
+    completed: 'Proběhlo',
     no_show: 'Nedorazil/a',
   };
 
   const filteredBookings = useMemo(() => {
-    return bookings.filter(b => {
+    const matchingBookings = bookings.filter(b => {
       const matchesSearch = 
         b.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         b.customerEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -178,7 +195,17 @@ export default function Admin() {
       const matchesStatus = statusFilter === 'all' || b.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
+
+    return matchingBookings.sort((a, b) => {
+      const difference = new Date(a.startAt).getTime() - new Date(b.startAt).getTime();
+      return statusFilter === 'completed' ? -difference : difference;
+    });
   }, [bookings, searchTerm, statusFilter]);
+
+  const statusCounts = useMemo(() => bookings.reduce<Record<string, number>>((counts, booking) => {
+    counts[booking.status] = (counts[booking.status] || 0) + 1;
+    return counts;
+  }, {}), [bookings]);
 
   const contacts = useMemo(() => {
     const map = new Map();
@@ -306,14 +333,14 @@ export default function Admin() {
         {activeTab === 'bookings' && (
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
+            onChange={(e) => setStatusFilter(e.target.value as BookingStatus)}
             className="w-full md:w-auto px-4 py-2 border border-[#E5E1DA] focus:outline-none focus:border-[#A68966] transition-colors bg-white"
           >
             <option value="all">Všechny stavy</option>
             <option value="pending">Čekající</option>
-            <option value="confirmed">Potvrzené</option>
+            <option value="confirmed">Potvrzené ({statusCounts.confirmed || 0})</option>
             <option value="cancelled">Zrušené</option>
-            <option value="completed">Dokončené</option>
+            <option value="completed">Proběhlé ({statusCounts.completed || 0})</option>
             <option value="no_show">Nedorazili</option>
           </select>
         )}
@@ -364,6 +391,7 @@ export default function Admin() {
                         <span className={`inline-block px-3 py-1 text-xs uppercase tracking-widest ${
                           booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
                           booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                          booking.status === 'completed' ? 'bg-[#E8E1D5] text-[#6B665F]' :
                           'bg-yellow-100 text-yellow-800'
                         }`}>
                           {statusLabels[booking.status] || booking.status}
