@@ -13,7 +13,7 @@ export default function Contact() {
 
         <div className="mb-20 grid items-stretch gap-8 md:grid-cols-2">
           <div className="space-y-8 animate-slide-up md:order-2">
-            <div className="h-full space-y-8 rounded-[2rem] border border-[#A68966]/15 bg-white p-8 luxury-shadow md:p-10">
+            <div className="h-full space-y-8 rounded-[2rem_2rem_7rem_2rem] border border-[#A68966]/15 bg-white p-8 luxury-shadow md:p-10">
               <div className="flex items-start gap-4">
                 <MapPin className="w-6 h-6 text-[#A68966] shrink-0 mt-1" />
                 <div>
